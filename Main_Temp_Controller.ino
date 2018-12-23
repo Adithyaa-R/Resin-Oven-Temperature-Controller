@@ -1,17 +1,17 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-//#include <DHT.h>
+#include <dht.h>
 
+dht DHT;
+#define DHT11_PIN DHTpin
 
-#include <OneWire.h>
-#include <DS18B20.h>
-#define ONE_WIRE_BUS 4 //originally 2
-OneWire oneWire(ONE_WIRE_BUS);
-DS18B20 sensor(&oneWire);
-
+//#include <OneWire.h>
+//#include <DS18B20.h>
+//#define ONE_WIRE_BUS 4 //originally 2
+//OneWire oneWire(ONE_WIRE_BUS);
+//DS18B20 sensor(&oneWire);
 
 LiquidCrystal_I2C lcd(0x3F, 16, 2);//address, width, height.
-//DHT dht;
 
 int TargetTemp = 0;
 int CurrTemp = 0;
@@ -32,6 +32,8 @@ int DHTpin = 4;
 
 void setup()
 {
+  //Serial.begin(9600);
+  //Serial.println("start");
   // initialize the LCD
   lcd.begin();
   lcd.backlight();
@@ -46,9 +48,15 @@ void loop()
   {
     lastUpdate = millis();
     SetTemp();
-    ReadTempDS18();
-    //ReadTempDHT();
-    Heater();
+
+    //ReadTempDS18();
+    ReadTempDHT();
+    /*
+      Serial.println("hello");
+      Serial.print(CurrTemp);
+      Serial.println(CurrHum);
+      Heater();
+    */
   }
 }
 
@@ -79,25 +87,26 @@ void LCD_Update()
 
 void ReadTempDS18()
 {
-  sensor.requestTemperatures();
-  while (!sensor.isConversionComplete());  // wait until sensor is ready
-  CurrTemp = sensor.getTempC();
+  //  sensor.requestTemperatures();
+  //  while (!sensor.isConversionComplete());  // wait until sensor is ready
+  //  CurrTemp = sensor.getTempC();
 }
 
 void ReadTempDHT()
 {
-  //CurrHum = dht.getHumidity();
-  //CurrTemp = dht.getTemperature();
+  int chk = DHT.read11(DHT11_PIN);//I don't know why this is here, but I'm sure it serves a purpose of some kind. Temp doesn't read without it.
+  CurrTemp = DHT.temperature;
+  CurrHum = DHT.humidity;
 }
 
 void Heater()
 {
-  if(CurrTemp <= TargetTemp)
+  if (CurrTemp <= TargetTemp)
   {
     digitalWrite(relayPin, HIGH);
   }
-  else if(CurrTemp >= (TargetTemp + Hyst))
+  else if (CurrTemp >= (TargetTemp + Hyst))
   {
-    digitalWrite(relayPin, LOW);    
+    digitalWrite(relayPin, LOW);
   }
 }
